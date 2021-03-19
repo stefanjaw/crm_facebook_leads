@@ -194,7 +194,7 @@ class CrmLead(models.Model):
             fb_lead_team_id = fb_page_team_id.id
 
         salespersons = self.env['res.users'].search(
-            ['&', ('sale_team_id','=', fb_lead_team_id ),('user_id','>', last_salesperson.id )  ]
+            ['&', ('sale_team_id','=', fb_lead_team_id ),('id','>', last_salesperson.id )  ]
         )
         if not salespersons:
             salespersons = self.env['res.users'].search(
