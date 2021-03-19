@@ -201,7 +201,7 @@ class CrmLead(models.Model):
                 [ ('sale_team_id','=', fb_lead_team_id ) ],
                 order='id asc'
             )
-        return salespersons.user_id[0]
+        return salespersons[0]
     
     def get_last_salesperson(self, team_id):
         #_logger.info("1616092913")
