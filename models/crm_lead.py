@@ -193,12 +193,12 @@ class CrmLead(models.Model):
             fb_page_team_id = fb_form_id_obj.page_id.team_id
             fb_lead_team_id = fb_page_team_id.id
 
-        salespersons = self.env['team.user'].search(
-            ['&', ('team_id','=', fb_lead_team_id ),('user_id','>', last_salesperson.id )  ]
+        salespersons = self.env['res.users'].search(
+            ['&', ('sale_team_id','=', fb_lead_team_id ),('user_id','>', last_salesperson.id )  ]
         )
         if not salespersons:
-            salespersons = self.env['team.user'].search(
-                [ ('team_id','=', fb_lead_team_id ) ],
+            salespersons = self.env['res.users'].search(
+                [ ('sale_team_id','=', fb_lead_team_id ) ],
                 order='id asc'
             )
         return salespersons.user_id[0]
@@ -211,8 +211,8 @@ class CrmLead(models.Model):
             last_team_lead = self.env['crm.lead'].search([('team_id','=', team_id.id )], order='id desc' )[0]
             last_salesperson = last_team_lead.user_id
         else:
-            team_salespersons = self.env['team.user'].search(
-                [ ('team_id','=', team_id.id ) ],
+            team_salespersons = self.env['res.users'].search(
+                [ ('sale_team_id','=', team_id.id ) ],
                 order='id asc'
             )
             last_salesperson = team_salespersons[0].user_id
