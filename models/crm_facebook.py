@@ -49,8 +49,6 @@ class CrmFacebookPage(models.Model):
         return
 
     def get_forms(self):
-        _logger.info("=====AQUI=====")
-        _logger.info("=====TEMPO: %s", self.access_token)
         r = requests.get("https://graph.facebook.com/v7.0/" + self.name + "/leadgen_forms",
                          params={'access_token': self.access_token}).json()
         if r.get('error'):
