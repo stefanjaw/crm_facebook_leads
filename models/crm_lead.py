@@ -93,9 +93,9 @@ class CrmLead(models.Model):
         vals = self.prepare_lead_creation(lead, form)
         
         team_id = self.get_page_team_id(vals)
-        
         last_salesperson = self.get_last_salesperson(team_id)
         salesperson = self.secuencial_salesperson(vals, last_salesperson)
+        
         vals['user_id'] = salesperson.id
         vals['team_id'] = team_id.id
         
@@ -169,6 +169,7 @@ class CrmLead(models.Model):
 
     @api.model
     def get_facebook_leads(self):
+        _logger.info('Fetch of leads has Started')
         fb_api = "https://graph.facebook.com/v7.0/"
         for form in self.env['crm.facebook.form'].search([]):
             # /!\ NOTE: We have to try lead creation if it fails we just log it into the Lead Form?
@@ -183,29 +184,45 @@ class CrmLead(models.Model):
     def secuencial_salesperson(self, vals, last_salesperson): 
         #_logger.info("1616036220")
         
-        fb_lead_team_id = int( vals['team_id'] )
-        
-        if not fb_lead_team_id:
-            fb_form_id = int( vals['facebook_form_id'] )
-            fb_form_id_obj = self.env['crm.facebook.form'].search(
-                [ ('id','=', fb_form_id ) ],
-            )
-            fb_page_team_id = fb_form_id_obj.page_id.team_id
-            fb_lead_team_id = fb_page_team_id.id
-
-        salespersons = self.env['res.users'].search(
-            ['&', ('sale_team_id','=', fb_lead_team_id ),('id','>', last_salesperson.id )  ],
-            order='id asc'
+        fb_form_id = int( vals['facebook_form_id'] )
+        fb_form_id_obj = self.env['crm.facebook.form'].search(
+            [ ('id','=', fb_form_id ) ],
         )
-        if not salespersons:
-            salespersons = self.env['res.users'].search(
-                [ ('sale_team_id','=', fb_lead_team_id ) ],
-                order='id asc'
-            )
-        return salespersons[0]
+
+        fb_page_team_id = fb_form_id_obj.page_id.team_id
+        page_user_ids = fb_page_team_id.member_ids
+
+        salespersons = []
+        for record in page_user_ids:
+            salespersons.append(record)
+
+        if fb_form_id_obj.team_id:
+            fb_form_team_id_users = fb_form_id_obj.team_id.member_ids
+
+            for record in fb_form_team_id_users:
+                salespersons.append(record)
+
+        salespersons.sort(key=lambda x: x.id)
+
+        if not last_salesperson:
+            last_salesperson_id = int(0)
+        else:
+            last_salesperson_id = last_salesperson.id
+        
+        salesperson = False
+        for record in salespersons:
+            if record.id > last_salesperson_id:
+                salesperson = record
+                break
+        
+        if not salesperson:
+            salesperson = salespersons[0]
+
+        return salesperson
     
     def get_last_salesperson(self, team_id):
         #_logger.info("1616092913")
+
         last_team_lead = self.env['crm.lead'].search([('team_id','=', team_id.id )], order='id desc' )
         
         if last_team_lead:
@@ -216,17 +233,21 @@ class CrmLead(models.Model):
                 [ ('sale_team_id','=', team_id.id ) ],
                 order='id asc'
             )
-            last_salesperson = team_salespersons[0].user_id
+            last_salesperson = team_salespersons[0]
         return last_salesperson
     
     def get_page_team_id(self,vals):
+        #_logger.info("1616544746")
         fb_lead_team_id = int( vals['team_id'] )
         
-        if not fb_lead_team_id:
-            fb_form_id = int( vals['facebook_form_id'] )
-            fb_form_id_obj = self.env['crm.facebook.form'].search(
+        fb_form_id = int( vals['facebook_form_id'] )
+        fb_form_id_obj = self.env['crm.facebook.form'].search(
                 [ ('id','=', fb_form_id ) ],
-            )
+        )
+        
+        if not fb_lead_team_id:    
             fb_page_team_id = fb_form_id_obj.page_id.team_id
             fb_lead_team_id = fb_page_team_id
+        else:
+            fb_lead_team_id = fb_form_id_obj.team_id
         return fb_lead_team_id
