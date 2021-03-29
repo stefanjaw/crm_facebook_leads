@@ -197,6 +197,7 @@ class CrmLead(models.Model):
             salespersons.append(record)
 
         if len(salespersons) == int(0):
+            salesperson = False
             return salesperson
 
         if fb_form_id_obj.team_id:
