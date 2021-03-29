@@ -196,6 +196,9 @@ class CrmLead(models.Model):
         for record in page_user_ids:
             salespersons.append(record)
 
+        if len(salespersons) == int(0):
+            return salesperson
+
         if fb_form_id_obj.team_id:
             fb_form_team_id_users = fb_form_id_obj.team_id.member_ids
 
