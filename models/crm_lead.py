@@ -96,9 +96,16 @@ class CrmLead(models.Model):
         last_salesperson = self.get_last_salesperson(team_id)
         salesperson = self.secuencial_salesperson(vals, last_salesperson)
         
-        vals['user_id'] = salesperson.id
-        vals['team_id'] = team_id.id
+        if salesperson:
+            vals['user_id'] = salesperson.id
+        else:
+            vals['user_id'] = False
         
+        if team_id:
+            vals['team_id'] = team_id.id
+        else:
+            vals['team_id'] = False
+
         return self.create(vals)
 
     def get_opportunity_name(self, vals, lead, form):
