@@ -106,6 +106,10 @@ class CrmLead(models.Model):
         else:
             vals['team_id'] = False
 
+        source_id = self.env['utm.source'].search([('name', '=', "Facebook")])
+        if source_id:
+            vals['source_id'] = source_id.id
+
         return self.create(vals)
 
     def get_opportunity_name(self, vals, lead, form):
