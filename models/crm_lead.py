@@ -116,6 +116,7 @@ class CrmLead(models.Model):
         if record_created and mail_template_id:
             self.env['mail.template'].browse(mail_template_id.id).send_mail(record_created.id, force_send=False)
         
+        
         return record_created
 
     def get_opportunity_name(self, vals, lead, form):
