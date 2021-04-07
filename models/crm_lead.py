@@ -112,9 +112,9 @@ class CrmLead(models.Model):
         
         record_created = self.create(vals)
 
-        if record_created:
-            mail_template_id  = form.mail_template_id
-            result = self.env['mail.template'].browse(mail_template_id.id).send_mail(record_created.id, force_send=False)
+        mail_template_id  = form.mail_template_id
+        if record_created and mail_template_id:
+            self.env['mail.template'].browse(mail_template_id.id).send_mail(record_created.id, force_send=False)
         
         return record_created
 
