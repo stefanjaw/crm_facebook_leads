@@ -97,6 +97,7 @@
                             <group>
                                 <field name="name"/>
                                 <field name="team_id"/>
+                                <field name="mail_template_id"/>
                             </group>
                             <group>
                                 <field name="page_id" readonly='1'/>
