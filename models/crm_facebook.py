@@ -87,7 +87,10 @@ class CrmFacebookForm(models.Model):
     source_id = fields.Many2one('utm.source')
     medium_id = fields.Many2one('utm.medium')
     
-    mail_template_id = fields.Many2one('mail.template', string='Mail Template')
+    mail_template_id = fields.Many2one('mail.template',
+                            string='Mail Template',
+                            domain="[('model_id.model', '=', 'crm.lead')]",
+                        )
 
     def get_fields(self):
         self.mappings.unlink()
