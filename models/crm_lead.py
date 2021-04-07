@@ -109,8 +109,14 @@ class CrmLead(models.Model):
         source_id = self.env['utm.source'].search([('name', '=', "Facebook")])
         if source_id:
             vals['source_id'] = source_id.id
+        
+        record_created = self.create(vals)
 
-        return self.create(vals)
+        if record_created:
+            mail_template_id  = form.mail_template_id
+            result = self.env['mail.template'].browse(mail_template_id.id).send_mail(record_created.id, force_send=False)
+        
+        return record_created
 
     def get_opportunity_name(self, vals, lead, form):
         if not vals.get('name'):
