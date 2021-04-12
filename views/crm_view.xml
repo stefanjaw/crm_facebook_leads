@@ -97,7 +97,12 @@
                             <group>
                                 <field name="name"/>
                                 <field name="team_id"/>
-                                <field name="mail_template_id"/>
+                                <field name="crm_lead_model_id" invisible="True" string="CRM LEAD MODEL"/>
+                                <field name="mail_template_id"
+                                  context="{'default_model_id': crm_lead_model_id}"
+                                  domain="[( 'model_id', '=', crm_lead_model_id )]"
+                                />
+                                
                             </group>
                             <group>
                                 <field name="page_id" readonly='1'/>
