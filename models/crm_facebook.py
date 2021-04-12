@@ -86,10 +86,16 @@ class CrmFacebookForm(models.Model):
     campaign_id = fields.Many2one('utm.campaign')
     source_id = fields.Many2one('utm.source')
     medium_id = fields.Many2one('utm.medium')
+
+    @api.model
+    def _get_model_id(self):
+        self.crm_lead_model_id = self.env['ir.model'].search([( 'model','=','crm.lead' ) ])
+        return self.crm_lead_model_id
+
+    crm_lead_model_id = fields.Integer(compute='_get_model_id')
     
     mail_template_id = fields.Many2one('mail.template',
                             string='Mail Template',
-                            domain="[('model_id.model', '=', 'crm.lead')]",
                         )
 
     def get_fields(self):
