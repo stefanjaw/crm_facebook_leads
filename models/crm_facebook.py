@@ -94,12 +94,10 @@ class CrmFacebookForm(models.Model):
 
     crm_lead_model_id = fields.Integer(compute='_get_model_id')
 
-    @api.model
-    def _get_base_automation_model_id(self):
-        self.base_automation_model_id = self.env['ir.actions.actions'].search([( 'name','=','Automated Actions' ) ])
-        return self.base_automation_model_id
-    
-    base_automation_model_id = fields.Integer(compute='_get_base_automation_model_id')
+    def action_view_base_automation(self):
+        action = self.env['ir.actions.act_window']._for_xml_id('base_automation.base_automation_act')
+        action['domain'] = [('model_id', '=', 'crm.lead')]
+        return action
     
     mail_template_id = fields.Many2one('mail.template',
                             string='Mail Template',
