@@ -102,7 +102,7 @@
                                   context="{'default_model_id': crm_lead_model_id}"
                                   domain="[( 'model_id', '=', crm_lead_model_id )]"
                                 />
-                                <button name="action_view_base_automation" type="object" class="btn-primary">Acciones Automáticas</button>
+                                <!-- <button name="action_view_base_automation" type="object" class="btn-primary">Acciones Automáticas</button> -->
                             </group>
                             <group>
                                 <field name="page_id" readonly='1'/>
