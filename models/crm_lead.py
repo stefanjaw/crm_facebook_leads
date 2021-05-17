@@ -116,8 +116,8 @@ class CrmLead(models.Model):
 
         mail_template_id  = form.mail_template_id
         if record_created and mail_template_id:
-            _logger.info("Mail Sent to Facebook User")
             email_sent = self.env['mail.template'].browse(mail_template_id.id).send_mail(record_created.id, force_send=False)
+            _logger.info("Sent to Facebook User the Mail ID: %s", email_sent)
             
         return record_created
 
