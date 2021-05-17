@@ -112,7 +112,7 @@ class CrmLead(models.Model):
         
         record_created = self.create(vals)
         
-        _logger.info("RECORD CREATED: %s", record_created)
+        _logger.info("RECORD CREATED FROM FACEBOOK LEAD: %s", record_created)
 
         mail_template_id  = form.mail_template_id
         if record_created and mail_template_id:
