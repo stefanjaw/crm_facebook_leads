@@ -87,6 +87,8 @@ class CrmFacebookForm(models.Model):
     source_id = fields.Many2one('utm.source')
     medium_id = fields.Many2one('utm.medium')
 
+    member_ids = fields.Many2many('res.users', 'fb_form_res_users_rel', 'fb_form', 'res_user')
+    
     @api.model
     def _get_model_id(self):
         self.crm_lead_model_id = self.env['ir.model'].search([( 'model','=','crm.lead' ) ])
