@@ -97,6 +97,7 @@
                             <group>
                                 <field name="name"/>
                                 <field name="team_id"/>
+                                <field name="member_ids" widget="many2many_tags" />
                                 <field name="crm_lead_model_id" invisible="True" string="CRM LEAD MODEL"/>
                                 <field name="mail_template_id"
                                   context="{'default_model_id': crm_lead_model_id}"
@@ -140,6 +141,7 @@
                     <field name="name"/>
                     <field name="facebook_form_id" readonly='1'/>
                     <field name="page_id" readonly='1'/>
+                    <field name="member_ids" widget="many2many_tags" />
                     <field name="team_id"/>
                 </tree>
             </field>
