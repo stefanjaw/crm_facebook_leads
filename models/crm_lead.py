@@ -8,6 +8,7 @@ _logger = logging.getLogger(__name__)
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
+    # 1624214808
 
     facebook_lead_id = fields.Char(readonly=True)
     facebook_page_id = fields.Many2one(
@@ -89,26 +90,22 @@ class CrmLead(models.Model):
 
     def lead_creation(self, lead, form):
         #_logger.info("1616107405")
-        
+
         vals = self.prepare_lead_creation(lead, form)
-        
-        team_id = self.get_page_team_id(vals)
-        last_salesperson = self.get_last_salesperson(team_id)
-        salesperson = self.secuencial_salesperson(vals, last_salesperson)
-        
-        if salesperson:
-            vals['user_id'] = salesperson.id
+        team_id = vals.get('team_id')
+        facebook_form_id = vals.get('facebook_form_id')
+        last_salesperson = self.get_last_salesperson(facebook_form_id)
+        salesperson_int = self.secuencial_salesperson(vals, last_salesperson)
+        if salesperson_int:
+            vals['user_id'] = salesperson_int
         else:
             vals['user_id'] = False
         
-        if team_id:
-            vals['team_id'] = team_id.id
-        else:
-            vals['team_id'] = False
-
-        source_id = self.env['utm.source'].search([('name', '=', "Facebook")])
-        if source_id:
-            vals['source_id'] = source_id.id
+        source_int = vals['source_id']
+        if not source_int:
+            source_id = self.env['utm.source'].search([('name', '=', "Facebook")])
+            if source_id:
+                vals['source_id'] = source_id.id
         
         record_created = self.create(vals)
         
@@ -201,65 +198,56 @@ class CrmLead(models.Model):
             self.lead_processing(r, form)
         _logger.info('Fetch of leads has ended')
 
-    def secuencial_salesperson(self, vals, last_salesperson): 
+    def secuencial_salesperson(self, vals, last_salesperson_id):
         #_logger.info("1616036220")
         
-        fb_form_id = int( vals['facebook_form_id'] )
-        fb_form_id_obj = self.env['crm.facebook.form'].search(
-            [ ('id','=', fb_form_id ) ],
-        )
-
-        fb_page_team_id = fb_form_id_obj.page_id.team_id
-        page_user_ids = fb_page_team_id.member_ids
-
-        salespersons = []
-        for record in page_user_ids:
-            salespersons.append(record)
-
-        if len(salespersons) == int(0):
-            salesperson = False
-            return salesperson
-
-        if fb_form_id_obj.team_id:
-            fb_form_team_id_users = fb_form_id_obj.team_id.member_ids
-
-            for record in fb_form_team_id_users:
-                salespersons.append(record)
-
-        salespersons.sort(key=lambda x: x.id)
-
-        if not last_salesperson:
-            last_salesperson_id = int(0)
+        if not last_salesperson_id:
+            last_salesperson_int = 0
         else:
-            last_salesperson_id = last_salesperson.id
+            last_salesperson_int = last_salesperson_id.id
+
+        facebook_form_int = vals.get("facebook_form_id")
+        facebook_form_id= self.env['crm.facebook.form'].search(
+            [('id','=', facebook_form_int )])
         
-        salesperson = False
-        for record in salespersons:
-            if record.id > last_salesperson_id:
-                salesperson = record
+        form_member_ids = facebook_form_id.member_ids
+        
+        if not form_member_ids:
+            return False
+        
+        fb_salespersons = []
+        for salesperson in form_member_ids:
+            fb_salespersons.append( salesperson.id )
+        
+        fb_salespersons.sort(reverse=False)
+        
+        salesperson_int = False
+        for record_int in fb_salespersons:
+            if last_salesperson_int < record_int:
+                salesperson_int = record_int
                 break
         
-        if not salesperson:
-            salesperson = salespersons[0]
+        if not salesperson_int:
+            salesperson_int = form_member_ids[0].id
 
-        return salesperson
+        return salesperson_int
     
-    def get_last_salesperson(self, team_id):
+    def get_last_salesperson(self, facebook_form_id):
         #_logger.info("1616092913")
 
-        last_team_lead = self.env['crm.lead'].search([('team_id','=', team_id.id )], order='id desc' )
+        last_lead_id = self.env['crm.lead'].search(
+            [('facebook_form_id','=', facebook_form_id )], order='id desc', limit=1 )
         
-        if last_team_lead:
-            last_team_lead = self.env['crm.lead'].search([('team_id','=', team_id.id )], order='id desc' )[0]
-            last_salesperson = last_team_lead.user_id
+        if not last_lead_id:
+            return False
+        
+        salesperson = last_lead_id.user_id
+        if salesperson:
+            return salesperson
         else:
-            team_salespersons = self.env['res.users'].search(
-                [ ('sale_team_id','=', team_id.id ) ],
-                order='id asc'
-            )
-            last_salesperson = team_salespersons[0]
-        return last_salesperson
-    
+            _logger.info("=== NO SALESPERSON FOUND")
+            return False
+
     def get_page_team_id(self,vals):
         #_logger.info("1616544746")
         fb_lead_team_id = int( vals['team_id'] )
