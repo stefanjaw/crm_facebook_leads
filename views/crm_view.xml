@@ -137,7 +137,7 @@
             <field name="name">crm.facebook.form.tree</field>
             <field name="model">crm.facebook.form</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree multi_edit="1">
                     <field name="name"/>
                     <field name="facebook_form_id" readonly='1'/>
                     <field name="page_id" readonly='1'/>
