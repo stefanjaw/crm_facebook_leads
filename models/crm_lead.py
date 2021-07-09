@@ -228,7 +228,7 @@ class CrmLead(models.Model):
                 break
         
         if not salesperson_int:
-            salesperson_int = form_member_ids[0].id
+            salesperson_int = fb_salespersons[0]
 
         return salesperson_int
     
