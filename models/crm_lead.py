@@ -6,9 +6,9 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
-    # 1624214808
 
     facebook_lead_id = fields.Char(readonly=True)
     facebook_page_id = fields.Many2one(
@@ -89,34 +89,8 @@ class CrmLead(models.Model):
         return vals
 
     def lead_creation(self, lead, form):
-        #_logger.info("1616107405")
-
         vals = self.prepare_lead_creation(lead, form)
-        team_id = vals.get('team_id')
-        facebook_form_id = vals.get('facebook_form_id')
-        last_salesperson = self.get_last_salesperson(facebook_form_id)
-        salesperson_int = self.secuencial_salesperson(vals, last_salesperson)
-        if salesperson_int:
-            vals['user_id'] = salesperson_int
-        else:
-            vals['user_id'] = False
-        
-        source_int = vals['source_id']
-        if not source_int:
-            source_id = self.env['utm.source'].search([('name', '=', "Facebook")])
-            if source_id:
-                vals['source_id'] = source_id.id
-        
-        record_created = self.create(vals)
-        
-        _logger.info("RECORD CREATED FROM FACEBOOK LEAD: %s", record_created)
-
-        mail_template_id  = form.mail_template_id
-        if record_created and mail_template_id:
-            email_sent = self.env['mail.template'].browse(mail_template_id.id).send_mail(record_created.id, force_send=False)
-            _logger.info("Sent to Facebook User the Mail ID: %s", email_sent)
-            
-        return record_created
+        return self.create(vals)
 
     def get_opportunity_name(self, vals, lead, form):
         if not vals.get('name'):
@@ -186,80 +160,19 @@ class CrmLead(models.Model):
 
     @api.model
     def get_facebook_leads(self):
-        _logger.info('Fetch of leads has Started')
         fb_api = "https://graph.facebook.com/v7.0/"
         for form in self.env['crm.facebook.form'].search([]):
             # /!\ NOTE: We have to try lead creation if it fails we just log it into the Lead Form?
             _logger.info('Starting to fetch leads from Form: %s' % form.name)
-            r = requests.get(fb_api + form.facebook_form_id + "/leads", params={'access_token': form.access_token,
-                                                                                'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'}).json()
+            params = {'access_token': form.access_token,
+                      'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'
+                      }
+            if form.date_retrieval:
+                params.update({
+                    'filtering': "[{'field': 'time_created', 'operator': 'GREATER_THAN', 'value': %s}]" % (int(form.date_retrieval.timestamp())),
+                })
+            r = requests.get(fb_api + form.facebook_form_id + "/leads", params=params).json()
             if r.get('error'):
                 raise UserError(r['error']['message'])
             self.lead_processing(r, form)
         _logger.info('Fetch of leads has ended')
-
-    def secuencial_salesperson(self, vals, last_salesperson_id):
-        #_logger.info("1616036220")
-        
-        if not last_salesperson_id:
-            last_salesperson_int = 0
-        else:
-            last_salesperson_int = last_salesperson_id.id
-
-        facebook_form_int = vals.get("facebook_form_id")
-        facebook_form_id= self.env['crm.facebook.form'].search(
-            [('id','=', facebook_form_int )])
-        
-        form_member_ids = facebook_form_id.member_ids
-        
-        if not form_member_ids:
-            return False
-        
-        fb_salespersons = []
-        for salesperson in form_member_ids:
-            fb_salespersons.append( salesperson.id )
-        
-        fb_salespersons.sort(reverse=False)
-        
-        salesperson_int = False
-        for record_int in fb_salespersons:
-            if last_salesperson_int < record_int:
-                salesperson_int = record_int
-                break
-        
-        if not salesperson_int:
-            salesperson_int = fb_salespersons[0]
-
-        return salesperson_int
-    
-    def get_last_salesperson(self, facebook_form_id):
-        #_logger.info("1616092913")
-
-        last_lead_id = self.env['crm.lead'].search(
-            [('facebook_form_id','=', facebook_form_id )], order='id desc', limit=1 )
-        
-        if not last_lead_id:
-            return False
-        
-        salesperson = last_lead_id.user_id
-        if salesperson:
-            return salesperson
-        else:
-            _logger.info("=== NO SALESPERSON FOUND")
-            return False
-
-    def get_page_team_id(self,vals):
-        #_logger.info("1616544746")
-        fb_lead_team_id = int( vals['team_id'] )
-        
-        fb_form_id = int( vals['facebook_form_id'] )
-        fb_form_id_obj = self.env['crm.facebook.form'].search(
-                [ ('id','=', fb_form_id ) ],
-        )
-        
-        if not fb_lead_team_id:    
-            fb_page_team_id = fb_form_id_obj.page_id.team_id
-            fb_lead_team_id = fb_page_team_id
-        else:
-            fb_lead_team_id = fb_form_id_obj.team_id
-        return fb_lead_team_id

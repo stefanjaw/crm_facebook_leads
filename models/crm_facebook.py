@@ -15,9 +15,6 @@ class CrmFacebookPage(models.Model):
     name = fields.Char(required=True, string='Page ID')
     access_token = fields.Char(required=True, string='Page Access Token')
     form_ids = fields.One2many('crm.facebook.form', 'page_id', string='Lead Forms')
-    
-    #Added as the default team of the webpage
-    team_id = fields.Many2one('crm.team', store=True)  
 
     _sql_constraints = [
         ('name_unique', 'unique(name)', 'You cannot create a Page twice')
@@ -54,23 +51,6 @@ class CrmFacebookPage(models.Model):
         if r.get('error'):
             raise ValidationError(r['error']['message'])
         self.form_processing(r)
-    
-    def get_forms_action(self):
-        fb_api = "https://graph.facebook.com/v7.0/"
-        for page in self.env['crm.facebook.page'].search([]):
-            _logger.info('Starting to fetch Forms from Page: %s' % page.label)
-            
-            r = requests.get(fb_api + page.name + "/leadgen_forms?",params={
-                'fields':'',
-                'access_token':page.access_token,
-            }).json()
-            if r.get('error'):
-                raise ValidationError(r['error']['message'])
-            page.form_processing(r)
-            _logger.info('Fetch of Forms has ended')
-            
-   
-    
 
 class CrmFacebookForm(models.Model):
     _name = 'crm.facebook.form'
@@ -86,24 +66,7 @@ class CrmFacebookForm(models.Model):
     campaign_id = fields.Many2one('utm.campaign')
     source_id = fields.Many2one('utm.source')
     medium_id = fields.Many2one('utm.medium')
-
-    member_ids = fields.Many2many('res.users', 'fb_form_res_users_rel', 'fb_form', 'res_user')
-    
-    @api.model
-    def _get_model_id(self):
-        self.crm_lead_model_id = self.env['ir.model'].search([( 'model','=','crm.lead' ) ])
-        return self.crm_lead_model_id
-
-    crm_lead_model_id = fields.Integer(compute='_get_model_id')
-
-    def action_view_base_automation(self):
-        action = self.env['ir.actions.act_window']._for_xml_id('base_automation.base_automation_act')
-        action['domain'] = [('model_id', '=', 'crm.lead')]
-        return action
-    
-    mail_template_id = fields.Many2one('mail.template',
-                            string='Mail Template',
-                        )
+    date_retrieval = fields.Datetime(string='Fetch Leads After')
 
     def get_fields(self):
         self.mappings.unlink()

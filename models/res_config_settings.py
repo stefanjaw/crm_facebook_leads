@@ -2,9 +2,6 @@ import requests
 from odoo import fields, models, api
 from odoo.exceptions import ValidationError
 
-import logging
-
-_logger = logging.getLogger(__name__)
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
@@ -15,10 +12,8 @@ class ResConfigSettings(models.TransientModel):
     # crm_fb_access_token_state = fields.Selection([('valid', 'Valid'), ('invalid', 'Invalid'), ('unknown', 'Unknown')],
     #                                              compute='_get_access_token_state', string='Token State')
     # crm_fb_access_token_state_message = fields.Text(compute='_get_access_token_state', string='Error Message')
-    
+
     def action_get_access_token(self):
-        _logger.info( "====action_get_access_token===")
-        _logger.info( "====self.crm_fb_app_id=== %s", self.crm_fb_app_id)
         redirect_url = "%s/crm_facebook_leads/auth" % (self.env['ir.config_parameter'].get_param('web.base.url'))
         auth_url = 'https://www.facebook.com/dialog/oauth?response_type=token&client_id={}&redirect_uri={}&scope={}'.format(
             self.crm_fb_app_id,
@@ -33,13 +28,10 @@ class ResConfigSettings(models.TransientModel):
             'target': 'current',
             'url': auth_url
         }
-        _logger.info( "===DEB=action_get_access_token=34==: %s", res )
         return res
 
     # TODO: open a wizard to selectively import pages instead of all
     def action_get_facebook_pages(self):
-        _logger.info( "====action_get_facebook_pages===")
-        _logger.info( "====action_get_facebook_pages=== %s", self.crm_fb_access_token)
         r = requests.get("https://graph.facebook.com/v7.0/me/accounts",
                          params={'access_token': self.crm_fb_access_token}).json()
         if r.get('error'):
@@ -54,13 +46,10 @@ class ResConfigSettings(models.TransientModel):
                     'access_token': p.get('access_token')
                 })
         action = self.env.ref('crm_facebook_leads.action_crm_facebook_page').read()[0]
-        _logger.info( "===DEB=action_get_facebook_pages==r===53==: %s", r )
-        _logger.info( "===DEB=action_get_facebook_pages==action===54==: %s", action )
         return action
 
     @api.depends('crm_fb_access_token')
     def _get_access_token_state(self):
-        _logger.info( "====get_access_token_state===")
         if not self.crm_fb_access_token:
             self.crm_fb_access_token_state = 'invalid'
             self.crm_fb_access_token_state_message = 'No Access Token provided'
@@ -99,51 +88,3 @@ class ResConfigSettings(models.TransientModel):
             return
         self.crm_fb_access_token_state = 'valid'
         self.crm_fb_access_token_state_message = ''
-
-class ResConfigSettings(models.TransientModel):
-    _inherit = 'res.config.settings'
-    
-    def cron_get_access_token(self):
-        _logger.info( "====cron_get_access_token===")
-        # client_id 165653190816042
-        
-        records = self.env['res.config.settings'].search([])
-        for record in records:
-            if record.crm_fb_access_token:
-                crm_fb_access_token = record.crm_fb_access_token
-                break
-        
-        redirect_url = "%s/crm_facebook_leads/auth" % (self.env['ir.config_parameter'].get_param('web.base.url'))
-        auth_url = 'https://www.facebook.com/dialog/oauth?response_type=token&client_id={}&redirect_uri={}&scope={}'.format(
-            165653190816042,
-            redirect_url,
-            'leads_retrieval,pages_manage_ads,pages_read_engagement,ads_management'
-        )
-
-        res = {
-            'name': 'Facebook Authentication',
-            'res_model': 'ir.actions.act_url',
-            'type': 'ir.actions.act_url',
-            'target': 'current',
-            'url': auth_url
-        }
-        _logger.info( "===DEB=action_get_access_token=34==: %s", res )
-        return res
-        
-        
-        '''
-        records = self.env['res.config.settings'].search([])
-        for record in records:
-            if record.crm_fb_access_token:
-                crm_fb_access_token = record.crm_fb_access_token
-                break
-        #crm_fb_access_token = record.crm_fb_access_token
-        _logger.info( "==28==cron_crm_fb_access_to: %s", crm_fb_access_token )
-
-        _logger.info( "==30==cron_crm_fb_access_to: %s", self.crm_fb_access_token )
-        data1 = self.action_get_access_token()
-        _logger.info( "====Data1===: %s", data1)
-        
-        data2 = self.action_get_facebook_pages(self)
-        _logger.info( "====Data2===: %s", data2)
-        '''

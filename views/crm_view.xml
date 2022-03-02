@@ -35,7 +35,6 @@
                             <field name="label"/>
                             <field name="name"/>
                             <field name="access_token" class="oe_edit_only"/>
-                            <field name="team_id"/>
                         </group>
                         <group colspan="2">
                             <field name="form_ids">
@@ -46,6 +45,7 @@
                                     <field name="campaign_id"/>
                                     <field name="medium_id"/>
                                     <field name="source_id"/>
+                                    <field name="date_retrieval"/>
                                 </tree>
                             </field>
                         </group>
@@ -97,17 +97,11 @@
                             <group>
                                 <field name="name"/>
                                 <field name="team_id"/>
-                                <field name="member_ids" widget="many2many_tags" />
-                                <field name="crm_lead_model_id" invisible="True" string="CRM LEAD MODEL"/>
-                                <field name="mail_template_id"
-                                  context="{'default_model_id': crm_lead_model_id}"
-                                  domain="[( 'model_id', '=', crm_lead_model_id )]"
-                                />
-                                <!-- <button name="action_view_base_automation" type="object" class="btn-primary">Acciones Automáticas</button> -->
                             </group>
                             <group>
                                 <field name="page_id" readonly='1'/>
                                 <field name="facebook_form_id" readonly='1'/>
+                                <field name="date_retrieval"/>
                                 <field name="access_token" invisible="1"/>
                             </group>
                             <group string="Tracking Info">
@@ -137,11 +131,10 @@
             <field name="name">crm.facebook.form.tree</field>
             <field name="model">crm.facebook.form</field>
             <field name="arch" type="xml">
-                <tree multi_edit="1">
+                <tree>
                     <field name="name"/>
                     <field name="facebook_form_id" readonly='1'/>
                     <field name="page_id" readonly='1'/>
-                    <field name="member_ids" widget="many2many_tags" />
                     <field name="team_id"/>
                 </tree>
             </field>
