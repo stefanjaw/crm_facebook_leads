@@ -123,15 +123,25 @@ class CrmLead(models.Model):
             vals['name'] = '%s - %s' % (form.name, lead['id'])
         return vals['name']
 
-    def get_fields_from_data(self, lead, form):
+    def get_fields_from_data(self, lead, form): # 1665356984
         vals, notes = {}, []
         form_mapping = form.mappings.filtered(lambda m: m.odoo_field).mapped('facebook_field')
+        
+        form_mapping.extend(['contact_name', 'email_from', 'email_cc', 'function', 'phone', 'mobile'])
+        
         unmapped_fields = []
         for name, value in lead.items():
             if name not in form_mapping:
                 unmapped_fields.append((name, value))
                 continue
             odoo_field = form.mappings.filtered(lambda m: m.facebook_field == name).odoo_field
+            
+            if len(odoo_field) == 0:
+                odoo_field = self.env['ir.model.fields'].search([
+                    ('name','=', name),
+                    ('model_id.model', '=', self._name)
+                ])
+
             notes.append('%s: %s' % (odoo_field.field_description, value))
             if odoo_field.ttype == 'many2one':
                 related_value = self.env[odoo_field.relation].search([('display_name', '=', value)])
