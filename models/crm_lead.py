@@ -198,6 +198,7 @@ class CrmLead(models.Model):
     def get_facebook_leads(self):
         _logger.info('Fetch of leads has Started')
         fb_api = "https://graph.facebook.com/v7.0/"
+        error_list = []
         for form in self.env['crm.facebook.form'].search([]):
             # /!\ NOTE: We have to try lead creation if it fails we just log it into the Lead Form?
             _logger.info('Starting to fetch leads from Form: %s' % form.name)
