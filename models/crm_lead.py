@@ -204,9 +204,28 @@ class CrmLead(models.Model):
             r = requests.get(fb_api + form.facebook_form_id + "/leads", params={'access_token': form.access_token,
                                                                                 'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'}).json()
             if r.get('error'):
-                raise UserError(r['error']['message'])
+                params={'access_token': form.access_token,
+                        'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'}
+                msg = "get params: \n"
+                msg += f"id: {form.id}form name: {form.name}\n"
+                msg += f"fb_api: {fb_api}\n"
+                msg += f"form.facebook_form_id: {form.facebook_form_id}\n"
+                msg += f"params: {params}\n"
+                msg += f"Error Msg: {r['error']['message']}"
+                error_list.append( msg )
+                continue
+                #raise UserError(r['error']['message'])
             self.lead_processing(r, form)
-        _logger.info('Fetch of leads has ended')
+        if len(error_list) > 0:
+            
+            self.env['ir.logging'].create({
+                'name': 'Facebook Errors',
+                'type': 'server',
+                'message': error_list,
+                'path': 'crm_lead',
+                'line': 'crm_lead_line',
+                'func': 'get leads',
+            })
 
     def secuencial_salesperson(self, vals, last_salesperson_id):
         #_logger.info("1616036220")
