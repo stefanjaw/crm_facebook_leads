@@ -202,8 +202,11 @@ class CrmLead(models.Model):
         for form in self.env['crm.facebook.form'].search([]):
             # /!\ NOTE: We have to try lead creation if it fails we just log it into the Lead Form?
             _logger.info('Starting to fetch leads from Form: %s' % form.name)
-            r = requests.get(fb_api + form.facebook_form_id + "/leads", params={'access_token': form.access_token,
-                                                                                'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'}).json()
+            
+            fb_fields = 'created_time,field_data,ad_id,ad_name,adset_id,campaign_id,is_organic'
+            #fb_fields original = 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'
+            
+            r = requests.get(fb_api + form.facebook_form_id + "/leads", params={'access_token': form.access_token, 'fields': fb_fields}).json()
             if r.get('error'):
                 params={'access_token': form.access_token,
                         'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'}
