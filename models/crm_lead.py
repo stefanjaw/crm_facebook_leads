@@ -44,6 +44,8 @@ class CrmLead(models.Model):
 
     def get_adset(self, lead):
         ad_obj = self.env['utm.adset']
+        _logger.info(f"  Commented get_adset")
+        return ad_obj
         if not lead.get('adset_id'):
             return ad_obj
         if not ad_obj.search(
@@ -56,6 +58,8 @@ class CrmLead(models.Model):
 
     def get_campaign(self, lead):
         campaign_obj = self.env['utm.campaign']
+        _logger.info(f"  Commented get_campaign")
+        return campaign_obj
         if not lead.get('campaign_id'):
             return campaign_obj
         if not campaign_obj.search(
