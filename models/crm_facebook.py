@@ -32,13 +32,23 @@ class CrmFacebookPage(models.Model):
         return result
 
     def form_processing(self, r):
+        _logger.info(f"DEF35 self: {self}\nr: {r}\n")
+
         if not r.get('data'):
+            _logger.info(f"  DEF38 NO r.get('data')\n")
             return
+        
         for form in r['data']:
+            _logger.info(f"  DEF42 form: {form}\n")
+            
             if self.form_ids.filtered(
                     lambda f: f.facebook_form_id == form['id']):
+                _logger.info(f"    DEF46 Si está: {form['id']}\n")
                 continue
+            
             if form['status'] == 'ACTIVE':
+                _logger.info(f"  DEF49 Creando\n")
+                
                 self.env['crm.facebook.form'].create({
                     'name': form['name'],
                     'facebook_form_id': form['id'],
@@ -46,11 +56,18 @@ class CrmFacebookPage(models.Model):
 
         if r.get('paging') and r['paging'].get('next'):
             self.form_processing(requests.get(r['paging']['next']).json())
+        
         return
 
     def get_forms(self):
-        r = requests.get("https://graph.facebook.com/v7.0/" + self.name + "/leadgen_forms",
+        _logger.info(f"  DEF52 self: {self}\n")
+        url = "https://graph.facebook.com/v17.0/" + self.name + "/leadgen_forms"
+        _logger.info(f"  DEF53 url: {url}\naccess_token: {self.access_token}\n")
+        
+        r = requests.get(url,
                          params={'access_token': self.access_token}).json()
+        _logger.info(f"  DEF54 r: {r}\n")
+
         if r.get('error'):
             raise ValidationError(r['error']['message'])
         self.form_processing(r)
@@ -107,8 +124,10 @@ class CrmFacebookForm(models.Model):
 
     def get_fields(self):
         self.mappings.unlink()
-        r = requests.get("https://graph.facebook.com/v7.0/" + self.facebook_form_id,
+        r = requests.get("https://graph.facebook.com/v17.0/" + self.facebook_form_id,
                          params={'access_token': self.access_token, 'fields': 'questions'}).json()
+        _logger.info(f"  DEF129 self.facebook_form_id: {self.facebook_form_id}\nr: {r}\n")
+
         if r.get('error'):
             raise ValidationError(r['error']['message'])
         if r.get('questions'):

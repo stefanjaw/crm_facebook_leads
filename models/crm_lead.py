@@ -179,13 +179,23 @@ class CrmLead(models.Model):
         return lead_data
 
     def lead_processing(self, r, form):
+        _logger.info(f"  DEF182 self: {self}\nform: {form}\nr: {r}\n")
+        
         if not r.get('data'):
+            _logger.info(f"  DEF185 NO r.get('data')")
             return
+        
         for lead in r['data']:
+            _logger.info(f"  DEF189 lead: {lead}\n")
+            
             lead = self.process_lead_field_data(lead)
+            _logger.info(f"  DEF192 lead: {lead}\n")
+            
             if not self.search(
                     [('facebook_lead_id', '=', lead.get('id')), '|', ('active', '=', True), ('active', '=', False)]):
+                _logger.info(f"DEF196 Next lead Creation: {lead}\n")
                 self.lead_creation(lead, form)
+                
 
         # /!\ NOTE: Once finished a page let us commit that
         try:
@@ -201,16 +211,26 @@ class CrmLead(models.Model):
     @api.model
     def get_facebook_leads(self):
         _logger.info('Fetch of leads has Started')
-        fb_api = "https://graph.facebook.com/v7.0/"
+        fb_api = "https://graph.facebook.com/v17.0/"
         error_list = []
         for form in self.env['crm.facebook.form'].search([]):
+            if form.facebook_form_id in [738701891323498,"738701891323498" ]:
+                _logger.info(f"  DEF208 colocado temporalmente, Eliminar esto")
+                pass
+            else:
+                continue
+            
             # /!\ NOTE: We have to try lead creation if it fails we just log it into the Lead Form?
-            _logger.info('Starting to fetch leads from Form: %s' % form.name)
+            _logger.info(f'Starting to fetch leads from Form: {form.facebook_form_id} : {form.name} ' )
+            _logger.info(f'  DEF209 form.access_token: {form.access_token}\n' )
             
             fb_fields = 'created_time,field_data,ad_id,ad_name,adset_id,campaign_id,is_organic'
+            _logger.info(f'  DEF212 fb_fields: {fb_fields}\n' )
             #fb_fields original = 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'
             
             r = requests.get(fb_api + form.facebook_form_id + "/leads", params={'access_token': form.access_token, 'fields': fb_fields}).json()
+            _logger.info(f"  DEF214 r: {str(r)[:1000]}\n")
+            
             if r.get('error'):
                 params={'access_token': form.access_token,
                         'fields': 'created_time,field_data,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,is_organic'}
@@ -223,6 +243,7 @@ class CrmLead(models.Model):
                 error_list.append( msg )
                 continue
                 #raise UserError(r['error']['message'])
+            
             self.lead_processing(r, form)
         if len(error_list) > 0:
             
@@ -234,6 +255,7 @@ class CrmLead(models.Model):
                 'line': 'crm_lead_line',
                 'func': 'get leads',
             })
+        
 
     def secuencial_salesperson(self, vals, last_salesperson_id):
         #_logger.info("1616036220")

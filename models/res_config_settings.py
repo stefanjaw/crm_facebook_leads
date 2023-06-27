@@ -40,22 +40,36 @@ class ResConfigSettings(models.TransientModel):
     def action_get_facebook_pages(self):
         _logger.info( "====action_get_facebook_pages===")
         _logger.info( "====action_get_facebook_pages=== %s", self.crm_fb_access_token)
-        r = requests.get("https://graph.facebook.com/v7.0/me/accounts",
-                         params={'access_token': self.crm_fb_access_token}).json()
+        r = requests.get("https://graph.facebook.com/v17.0/me",
+                         params={
+                             'access_token': self.crm_fb_access_token,
+                             'fields': 'id,access_token,name'
+                         }).json()
+        
+        _logger.info(f"  DEF49 r: {r}\n")
         if r.get('error'):
             raise ValidationError(r['error']['message'])
+        else:
+            data = r
+            r = {'data': [data]}
+            pass
+        _logger.info(f"  DEF56 r: {r}")
+
         if not r.get('data'):
+            _logger.info(f"  DEF59 no r.get('data')\n")
             return
         for p in r['data']:
+            _logger.info(f"  DEF62 p: {p}\n")
             if not self.env['crm.facebook.page'].search([('name', '=', p.get('id'))]):
                 self.env['crm.facebook.page'].create({
                     'label': p.get('name'),
                     'name': p.get('id'),
                     'access_token': p.get('access_token')
                 })
+
         action = self.env.ref('crm_facebook_leads.action_crm_facebook_page').read()[0]
-        _logger.info( "===DEB=action_get_facebook_pages==r===53==: %s", r )
-        _logger.info( "===DEB=action_get_facebook_pages==action===54==: %s", action )
+        _logger.info( f"  DEF71 facebook response: {r}\n")
+        _logger.info( f"  DEF72 Odoo action: {action}")
         return action
 
     @api.depends('crm_fb_access_token')
@@ -72,6 +86,7 @@ class ResConfigSettings(models.TransientModel):
                                                                                 'access_token': '|'.join(
                                                                                     [self.crm_fb_app_id,
                                                                                      self.crm_fb_app_secret])}).json()
+        STOP89_pendiente_cambiar_v7_0_ver_linea_antes
         if r.get('error') or r.get('data', []).get('error'):
             self.crm_fb_access_token_state = 'invalid'
             self.crm_fb_access_token_state_message = r.get('error') and r['error']['message'] or r['data']['error'][
